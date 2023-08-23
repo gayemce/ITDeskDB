@@ -1,0 +1,273 @@
+USE [master]
+GO
+/****** Object:  Database [ITDeskDb]    Script Date: 17.08.2023 09:38:39 ******/
+CREATE DATABASE [ITDeskDb]
+ CONTAINMENT = NONE
+ ON  PRIMARY 
+( NAME = N'ITDeskDb', FILENAME = N'C:\Program Files\Microsoft SQL Server\MSSQL15.SQLEXPRESS\MSSQL\DATA\ITDeskDb.mdf' , SIZE = 8192KB , MAXSIZE = UNLIMITED, FILEGROWTH = 65536KB )
+ LOG ON 
+( NAME = N'ITDeskDb_log', FILENAME = N'C:\Program Files\Microsoft SQL Server\MSSQL15.SQLEXPRESS\MSSQL\DATA\ITDeskDb_log.ldf' , SIZE = 8192KB , MAXSIZE = 2048GB , FILEGROWTH = 65536KB )
+ WITH CATALOG_COLLATION = DATABASE_DEFAULT
+GO
+ALTER DATABASE [ITDeskDb] SET COMPATIBILITY_LEVEL = 150
+GO
+IF (1 = FULLTEXTSERVICEPROPERTY('IsFullTextInstalled'))
+begin
+EXEC [ITDeskDb].[dbo].[sp_fulltext_database] @action = 'enable'
+end
+GO
+ALTER DATABASE [ITDeskDb] SET ANSI_NULL_DEFAULT OFF 
+GO
+ALTER DATABASE [ITDeskDb] SET ANSI_NULLS OFF 
+GO
+ALTER DATABASE [ITDeskDb] SET ANSI_PADDING OFF 
+GO
+ALTER DATABASE [ITDeskDb] SET ANSI_WARNINGS OFF 
+GO
+ALTER DATABASE [ITDeskDb] SET ARITHABORT OFF 
+GO
+ALTER DATABASE [ITDeskDb] SET AUTO_CLOSE OFF 
+GO
+ALTER DATABASE [ITDeskDb] SET AUTO_SHRINK OFF 
+GO
+ALTER DATABASE [ITDeskDb] SET AUTO_UPDATE_STATISTICS ON 
+GO
+ALTER DATABASE [ITDeskDb] SET CURSOR_CLOSE_ON_COMMIT OFF 
+GO
+ALTER DATABASE [ITDeskDb] SET CURSOR_DEFAULT  GLOBAL 
+GO
+ALTER DATABASE [ITDeskDb] SET CONCAT_NULL_YIELDS_NULL OFF 
+GO
+ALTER DATABASE [ITDeskDb] SET NUMERIC_ROUNDABORT OFF 
+GO
+ALTER DATABASE [ITDeskDb] SET QUOTED_IDENTIFIER OFF 
+GO
+ALTER DATABASE [ITDeskDb] SET RECURSIVE_TRIGGERS OFF 
+GO
+ALTER DATABASE [ITDeskDb] SET  DISABLE_BROKER 
+GO
+ALTER DATABASE [ITDeskDb] SET AUTO_UPDATE_STATISTICS_ASYNC OFF 
+GO
+ALTER DATABASE [ITDeskDb] SET DATE_CORRELATION_OPTIMIZATION OFF 
+GO
+ALTER DATABASE [ITDeskDb] SET TRUSTWORTHY OFF 
+GO
+ALTER DATABASE [ITDeskDb] SET ALLOW_SNAPSHOT_ISOLATION OFF 
+GO
+ALTER DATABASE [ITDeskDb] SET PARAMETERIZATION SIMPLE 
+GO
+ALTER DATABASE [ITDeskDb] SET READ_COMMITTED_SNAPSHOT OFF 
+GO
+ALTER DATABASE [ITDeskDb] SET HONOR_BROKER_PRIORITY OFF 
+GO
+ALTER DATABASE [ITDeskDb] SET RECOVERY SIMPLE 
+GO
+ALTER DATABASE [ITDeskDb] SET  MULTI_USER 
+GO
+ALTER DATABASE [ITDeskDb] SET PAGE_VERIFY CHECKSUM  
+GO
+ALTER DATABASE [ITDeskDb] SET DB_CHAINING OFF 
+GO
+ALTER DATABASE [ITDeskDb] SET FILESTREAM( NON_TRANSACTED_ACCESS = OFF ) 
+GO
+ALTER DATABASE [ITDeskDb] SET TARGET_RECOVERY_TIME = 60 SECONDS 
+GO
+ALTER DATABASE [ITDeskDb] SET DELAYED_DURABILITY = DISABLED 
+GO
+ALTER DATABASE [ITDeskDb] SET ACCELERATED_DATABASE_RECOVERY = OFF  
+GO
+ALTER DATABASE [ITDeskDb] SET QUERY_STORE = ON
+GO
+ALTER DATABASE [ITDeskDb] SET QUERY_STORE (OPERATION_MODE = READ_WRITE, CLEANUP_POLICY = (STALE_QUERY_THRESHOLD_DAYS = 30), DATA_FLUSH_INTERVAL_SECONDS = 900, INTERVAL_LENGTH_MINUTES = 60, MAX_STORAGE_SIZE_MB = 1000, QUERY_CAPTURE_MODE = AUTO, SIZE_BASED_CLEANUP_MODE = AUTO, MAX_PLANS_PER_QUERY = 200, WAIT_STATS_CAPTURE_MODE = ON)
+GO
+USE [ITDeskDb]
+GO
+/****** Object:  Table [dbo].[Tickets]    Script Date: 17.08.2023 09:38:39 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[Tickets](
+	[Id] [int] IDENTITY(1,1) NOT NULL,
+	[Title] [varchar](250) NOT NULL,
+	[IsCompleted] [bit] NOT NULL,
+	[UserId] [int] NOT NULL,
+	[CreatedDate] [datetime] NOT NULL,
+	[UpdatedDate] [datetime] NULL,
+ CONSTRAINT [PK_Tickets] PRIMARY KEY CLUSTERED 
+(
+	[Id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[Users]    Script Date: 17.08.2023 09:38:39 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[Users](
+	[Id] [int] IDENTITY(1,1) NOT NULL,
+	[Name] [varchar](50) NOT NULL,
+	[Email] [varchar](250) NOT NULL,
+	[Password] [varchar](10) NOT NULL,
+	[IsAdmin] [bit] NOT NULL,
+	[CreatedDate] [datetime] NOT NULL,
+	[UpdatedDate] [datetime] NULL,
+ CONSTRAINT [PK_Users] PRIMARY KEY CLUSTERED 
+(
+	[Id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  View [dbo].[TicketView]    Script Date: 17.08.2023 09:38:39 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE VIEW [dbo].[TicketView] as
+select 
+	FORMAT(t.CreatedDate,'dd.MM.yyyy HH:mm:ss') as 'Oluşturulma Tarihi', 
+	u.Name as 'Kullanıcı Adı',
+	t.Title as 'Başlık',
+	CASE
+		WHEN t.IsCompleted = 0 Then 'Bekliyor'
+		WHEN t.IsCompleted = 1 THEN 'Tamamlandı'
+	END as'Tamamlandı Mı?'	
+	from Tickets as t LEFT JOIN Users as u on t.UserId = u.Id
+GO
+/****** Object:  View [dbo].[UserTicketReports]    Script Date: 17.08.2023 09:38:39 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE VIEW [dbo].[UserTicketReports] as
+Select 
+	Name, 
+	(select Count(*) from Tickets where UserId=Users.Id) as 'Ticket Sayısı', 
+	(select Count(*) from Tickets where UserId=Users.Id and IsCompleted=1) as 'Tamamlanmış Ticket Sayısı',
+	(select Count(*) from Tickets where UserId=Users.Id and IsCompleted=0) as 'Kalan Ticket Sayısı'
+From Users
+
+
+GO
+/****** Object:  Table [dbo].[Ratings]    Script Date: 17.08.2023 09:38:39 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[Ratings](
+	[Id] [int] IDENTITY(1,1) NOT NULL,
+	[TicketId] [int] NOT NULL,
+	[Star] [int] NOT NULL,
+	[Description] [varchar](250) NOT NULL,
+	[CreatedDate] [datetime] NOT NULL,
+	[UpdateDate] [datetime] NULL,
+ CONSTRAINT [PK_Ratings] PRIMARY KEY CLUSTERED 
+(
+	[Id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  View [dbo].[TicketReports]    Script Date: 17.08.2023 09:38:39 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE VIEW [dbo].[TicketReports] as
+select 
+	t.Title as 'Başlık',
+	FORMAT(t.CreatedDate,'dddd MMMM yyyy HH:mm:ss') as 'Oluşturulma Tarihi',
+	u.Name as 'Kullanıcı Adı',
+	CASE
+		WHEN t.IsCompleted = 0 THEN 'Bekliyor'
+		WHEN t.IsCompleted = 1 THEN 'Tamamlandı'
+	END as 'Tamamlandı Mı?',
+	r.Star as 'Yıldız',
+	r.Description as 'Yorum'
+	from 
+	Tickets as t 
+	Left Join Ratings as r on t.Id = r.TicketId 
+	Left Join Users as u on t.UserId = u.Id
+	Where not r.TicketId is null
+GO
+/****** Object:  Table [dbo].[TicketDetails]    Script Date: 17.08.2023 09:38:39 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[TicketDetails](
+	[Id] [int] IDENTITY(1,1) NOT NULL,
+	[TicketId] [int] NOT NULL,
+	[UserId] [int] NOT NULL,
+	[Content] [varchar](250) NOT NULL,
+	[CreatedDate] [datetime] NOT NULL,
+	[UpdatedDate] [datetime] NULL,
+ CONSTRAINT [PK__TicketDe__3214EC075ECA0853] PRIMARY KEY CLUSTERED 
+(
+	[Id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+ALTER TABLE [dbo].[Ratings]  WITH CHECK ADD  CONSTRAINT [FK_Ratings_Tickets] FOREIGN KEY([TicketId])
+REFERENCES [dbo].[Tickets] ([Id])
+GO
+ALTER TABLE [dbo].[Ratings] CHECK CONSTRAINT [FK_Ratings_Tickets]
+GO
+ALTER TABLE [dbo].[TicketDetails]  WITH CHECK ADD  CONSTRAINT [FK_TicketDetails_Users] FOREIGN KEY([TicketId])
+REFERENCES [dbo].[Tickets] ([Id])
+GO
+ALTER TABLE [dbo].[TicketDetails] CHECK CONSTRAINT [FK_TicketDetails_Users]
+GO
+ALTER TABLE [dbo].[TicketDetails]  WITH CHECK ADD  CONSTRAINT [FK_TicketDetails_Users1] FOREIGN KEY([UserId])
+REFERENCES [dbo].[Users] ([Id])
+GO
+ALTER TABLE [dbo].[TicketDetails] CHECK CONSTRAINT [FK_TicketDetails_Users1]
+GO
+ALTER TABLE [dbo].[Tickets]  WITH CHECK ADD  CONSTRAINT [FK_Tickets_Users] FOREIGN KEY([UserId])
+REFERENCES [dbo].[Users] ([Id])
+ON DELETE CASCADE
+GO
+ALTER TABLE [dbo].[Tickets] CHECK CONSTRAINT [FK_Tickets_Users]
+GO
+/****** Object:  StoredProcedure [dbo].[CreateTicket]    Script Date: 17.08.2023 09:38:39 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE PROCEDURE [dbo].[CreateTicket]
+	@Title VARCHAR(MAX),
+	@UserId INT
+AS
+BEGIN
+	Insert Into Tickets Values(@Title,0,@UserId,GETDATE(),null)
+END
+
+select * from Tickets
+GO
+/****** Object:  StoredProcedure [dbo].[GetTicketsByPageSize]    Script Date: 17.08.2023 09:38:39 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE PROCEDURE [dbo].[GetTicketsByPageSize]
+	@PageSize INT
+AS
+BEGIN
+select 
+	TOP (@PageSize)
+	FORMAT(t.CreatedDate,'dd.MM.yyyy HH:mm:ss') as 'Oluşturulma Tarihi', 
+	u.Name as 'Kullanıcı Adı',
+	t.Title as 'Başlık',
+	CASE
+		WHEN t.IsCompleted = 0 Then 'Bekliyor'
+		WHEN t.IsCompleted = 1 THEN 'Tamamlandı'
+	END as'Tamamlandı Mı?'	
+	from Tickets as t LEFT JOIN Users as u on t.UserId = u.Id
+END
+
+	
+GO
+USE [master]
+GO
+ALTER DATABASE [ITDeskDb] SET  READ_WRITE 
+GO
